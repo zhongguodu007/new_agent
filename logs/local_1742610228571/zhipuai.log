@@ -1,0 +1,5 @@
+2025-03-22 10:23:48,586 asyncio      32204 DEBUG    Using proactor: IocpProactor
+2025-03-22 10:23:48,647 uvicorn.error 32204 INFO     Started server process [32204]
+2025-03-22 10:23:48,647 uvicorn.error 32204 INFO     Waiting for application startup.
+2025-03-22 10:23:48,648 uvicorn.error 32204 INFO     Application startup complete.
+2025-03-22 10:23:48,649 uvicorn.error 32204 INFO     Uvicorn running on http://127.0.0.1:9999 (Press CTRL+C to quit)

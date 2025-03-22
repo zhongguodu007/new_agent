@@ -12,6 +12,7 @@ if __name__ == '__main__':
         ids=["1","2"],
         embeddings=[[1,1,1],[1,1,2]],
     )
+    
 
 
     results = collection.query(query_texts=["这是关于苹果的文件"],query_embeddings=[1,1,3],n_results=1)
