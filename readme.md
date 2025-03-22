@@ -6,6 +6,8 @@
 
 [Chroma文档](https://docs.trychroma.com/docs/overview/introduction)
 
+[Pydantic文档](https://pydantic.com.cn/#pydanti)
+
 ## 嵌入模块
 
 ## 检索模块
