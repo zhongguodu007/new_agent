@@ -137,18 +137,18 @@ OutputType = Union[
 ]
 
 
-class ZhipuAIAllToolsRunnable(RunnableSerializable[Dict, OutputType]):#执行链
+class ZhipuAIAllToolsRunnable(RunnableSerializable[Dict, OutputType]):
     agent_executor: AgentExecutor
     """ZhipuAI AgentExecutor."""
 
     model_name: str = Field(default="glm-4-alltools")
     """工具模型"""
     callback: AgentExecutorAsyncIteratorCallbackHandler
-    """ZhipuAI AgentExecutor callback.处理交互时间 鼠标点击 异步操作"""
+    """ZhipuAI AgentExecutor callback."""
     intermediate_steps: List[Tuple[AgentAction, BaseToolOutput]] = []
     """intermediate_steps to store the data to be processed."""
     history: List[Union[List, Tuple, Dict]] = []
-    """user message history 历史消息"""
+    """user message history"""
 
     class Config:
         arbitrary_types_allowed = True
@@ -157,7 +157,7 @@ class ZhipuAIAllToolsRunnable(RunnableSerializable[Dict, OutputType]):#执行链
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     @staticmethod
-    def paser_all_tools(#获取工具的信息
+    def paser_all_tools(
         tool: Dict[str, Any], callbacks: List[BaseCallbackHandler] = []
     ) -> AdapterAllTool:
         platform_params = {}

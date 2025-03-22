@@ -64,9 +64,7 @@ from langchain_core.outputs import (
     LLMResult,
     RunInfo,
 )
-# langchain_core.pydantic_v1 import Field, SecretStr, root_validator
-from pydantic import BaseModel, Field, SecretStr, model_validator
-
+from langchain_core.pydantic_v1 import Field, SecretStr, root_validator
 from langchain_core.runnables.config import ensure_config, run_in_executor
 from langchain_core.utils import (
     convert_to_secret_str,
@@ -389,8 +387,7 @@ class ChatZhipuAI(BaseChatModel):
         class Config:
             allow_population_by_field_name = True
 
-    # @root_validator(pre=True, allow_reuse=True)
-    @model_validator(mode="before")
+    @root_validator(pre=True, allow_reuse=True)
     def build_extra(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Build extra kwargs from additional params that were passed in."""
         all_required_field_names = get_pydantic_field_names(cls)
@@ -400,8 +397,7 @@ class ChatZhipuAI(BaseChatModel):
         )
         return values
 
-    # @root_validator(allow_reuse=True)
-    @model_validator(mode="after")
+    @root_validator(allow_reuse=True)
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
 

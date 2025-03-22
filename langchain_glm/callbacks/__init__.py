@@ -5,7 +5,7 @@
 
 .. code-block::
 
-    BaseCallbackHandler --> <name>CallbackHandler  # Example: AimCallbackHandler 描述一个继承关系
+    BaseCallbackHandler --> <name>CallbackHandler  # Example: AimCallbackHandler
 """
 from langchain_glm.callbacks.agent_callback_handler import (
     AgentExecutorAsyncIteratorCallbackHandler,
@@ -13,4 +13,4 @@ from langchain_glm.callbacks.agent_callback_handler import (
 
 __all__ = [
     "AgentExecutorAsyncIteratorCallbackHandler",
-]#只用这个被外部访问
+]

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from operator import itemgetter
 from typing import Dict, List, Union
-
+import sys
+sys.path.append('C:\\Users\\DELL\\Desktop\\rag\\new-agent')
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import (
     Runnable,
@@ -12,6 +13,8 @@ from langchain_core.runnables import (
 from langchain_core.tools import tool
 
 from langchain_glm import ChatZhipuAI
+import os
+os.environ['ZHIPUAI_API_KEY'] = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc'
 
 
 @tool
@@ -52,3 +55,6 @@ def test_tool_use():
         "What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"
     )
     print(out)
+
+if __name__ == '__main__':
+    test_tool_use()

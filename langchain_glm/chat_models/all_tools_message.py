@@ -16,8 +16,7 @@ from langchain_core.messages.tool import (
     default_tool_parser,
     tool_call_chunk,
 )
-#from langchain_core.pydantic_v1 import root_validator
-from pydantic import field_validator, model_validator
+from langchain_core.pydantic_v1 import root_validator
 from langchain_core.utils._merge import merge_dicts, merge_lists
 from langchain_core.utils.json import (
     parse_partial_json,
@@ -82,8 +81,7 @@ class ALLToolsMessageChunk(AIMessage, BaseMessageChunk):
             "invalid_tool_calls": self.invalid_tool_calls,
         }
 
-    # @root_validator(allow_reuse=True)
-    @model_validator(mode="after")
+    @root_validator(allow_reuse=True)
     def _backwards_compat_tool_calls(cls, values: dict) -> dict:
         raw_tool_calls = values.get("additional_kwargs", {}).get("tool_calls")
         tool_calls = (
@@ -105,8 +103,7 @@ class ALLToolsMessageChunk(AIMessage, BaseMessageChunk):
                 pass
         return values
 
-    # @root_validator(allow_reuse=True)
-    @model_validator(mode="after")
+    @root_validator(allow_reuse=True)
     def init_tool_calls(cls, values: dict) -> dict:
         if not values["tool_call_chunks"]:
             if values["tool_calls"]:
