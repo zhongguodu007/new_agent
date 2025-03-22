@@ -1,6 +1,8 @@
 import chromadb
+from langchain_chroma import Chroma
 
 if __name__ == '__main__':
+    store = Chroma('my_rag')
     chroma_client = chromadb.PersistentClient(path='./rag')
     collection = chroma_client.get_collection(name='my_rag')
 
@@ -15,5 +17,5 @@ if __name__ == '__main__':
     
 
 
-    results = collection.query(query_texts=["这是关于苹果的文件"],query_embeddings=[1,1,3],n_results=1)
-    print(results)
+    # results = collection.query(query_texts=["这是关于苹果的文件"],query_embeddings=[1,1,3],n_results=1)
+    # print(results)

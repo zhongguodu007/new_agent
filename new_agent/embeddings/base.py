@@ -41,7 +41,7 @@ class EmbeddingModel(BaseModel, Embeddings):
     client: Any = None
     model: str = 'embedding-2'
     chunk_size: int = 1000
-    model_kwargs: Dict[str, Any] = None
+    model_kwargs: Dict[str, Any] = Field(default_factory=dict)
 
     class Cofig:
 
@@ -80,7 +80,9 @@ class EmbeddingModel(BaseModel, Embeddings):
     
     @property
     def _invocation_params(self) -> Dict[str, Any]:
+        print(self.model)
         params: Dict = {"model": self.model, **self.model_kwargs}
+        print(params)
         return params
     
 
@@ -179,6 +181,7 @@ class TextSpliter:
 
 
 if __name__ == "__main__":
-    # model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
-
+    model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
+    res = model.embed_query(["141341"])
+    print(res)
     pass
