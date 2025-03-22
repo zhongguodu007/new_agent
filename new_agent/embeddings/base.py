@@ -80,9 +80,8 @@ class EmbeddingModel(BaseModel, Embeddings):
     
     @property
     def _invocation_params(self) -> Dict[str, Any]:
-        print(self.model)
+
         params: Dict = {"model": self.model, **self.model_kwargs}
-        print(params)
         return params
     
 
@@ -91,22 +90,14 @@ class EmbeddingModel(BaseModel, Embeddings):
         
         _chunk_size = chunk_size if chunk_size else self.chunk_size
 
-        # _iter = range(0, len(texts), _chunk_size)
-
         batch_embeddings: List[List[float]] = []
-        # for i in texts:
-        #     response = self.client.create(
-        #         input=texts[i: i+_chunk_size], **self._invocation_params
-        #     )
-        #     if not isinstance(response, dict):
-        #         response = response.dict()
         response = self.client.create(
             input=texts, **self._invocation_params
         )
         if not isinstance(response, dict):
             response = response.dict()
 
-        batch_embeddings.extend(r['embedding'] for d in response['data'] for r in d)
+        batch_embeddings.extend(d['embedding'] for d in response['data'])
 
         return batch_embeddings
         
@@ -181,7 +172,7 @@ class TextSpliter:
 
 
 if __name__ == "__main__":
-    model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
-    res = model.embed_query(["141341"])
-    print(res)
+    # model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
+    # res = model.embed_documents(['In', "foo"])
+    # print(res)
     pass
