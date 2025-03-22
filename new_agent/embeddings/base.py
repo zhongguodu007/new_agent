@@ -40,7 +40,7 @@ class EmbeddingModel(BaseModel, Embeddings):
 
     client: Any = None
     model: str = 'embedding-2'
-    chunk_size: int = 1000
+    chunk_size: int = 10
     model_kwargs: Dict[str, Any] = Field(default_factory=dict)
 
     class Cofig:
@@ -181,5 +181,5 @@ if __name__ == "__main__":
 
     # model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
     # res = model.embed_documents(texts=text)
-    # print(res)
+    # print(len(res))
     pass
