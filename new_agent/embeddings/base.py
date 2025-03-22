@@ -91,13 +91,16 @@ class EmbeddingModel(BaseModel, Embeddings):
         _chunk_size = chunk_size if chunk_size else self.chunk_size
 
         batch_embeddings: List[List[float]] = []
-        response = self.client.create(
-            input=texts, **self._invocation_params
-        )
-        if not isinstance(response, dict):
-            response = response.dict()
 
-        batch_embeddings.extend(d['embedding'] for d in response['data'])
+        for i in range(0, len(texts), _chunk_size):
+
+            response = self.client.create(
+                input=texts[i:i+_chunk_size], **self._invocation_params
+            )
+            if not isinstance(response, dict):
+                response = response.dict()
+
+            batch_embeddings.extend(d['embedding'] for d in response['data'])
 
         return batch_embeddings
         
@@ -172,7 +175,11 @@ class TextSpliter:
 
 
 if __name__ == "__main__":
+    # splitor = TextSpliter()
+
+    # text = splitor.split_text('./其他有意思的论文/对目标检测的面向目标的关系蒸馏.pdf')
+
     # model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
-    # res = model.embed_documents(['In', "foo"])
+    # res = model.embed_documents(texts=text)
     # print(res)
     pass
