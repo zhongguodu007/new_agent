@@ -34,8 +34,8 @@ from langchain_core.utils import (
     get_pydantic_field_names
 )
 import os
-
-
+os.environ['OPENAI_API_BASE'] = 'https://open.bigmodel.cn/api/paas/v4/'
+os.environ["ZHIPUAI_API_KEY"] = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc'
 class EmbeddingModel(BaseModel, Embeddings):
 
     client: Any = None
@@ -179,4 +179,6 @@ class TextSpliter:
 
 
 if __name__ == "__main__":
+    # model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
+
     pass
