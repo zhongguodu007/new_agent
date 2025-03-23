@@ -9,10 +9,14 @@ from uuid import UUID
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.schema import AgentAction, AgentFinish
 from langchain_core.outputs import LLMResult
-
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from langchain_glm.agent_toolkits import BaseToolOutput
 from langchain_glm.utils import History
-
+from langchain.agents import initialize_agent, AgentType
+from langchain_community.chat_models import ChatZhipuAI
+from langchain_community.tools import DuckDuckGoSearchRun
 
 def dumps(obj: Dict) -> str:
     return json.dumps(obj, ensure_ascii=False)
@@ -234,7 +238,7 @@ class AgentExecutorAsyncIteratorCallbackHandler(AsyncIteratorCallbackHandler):
             "run_id": str(run_id),
             "status": AgentStatus.chain_start,
             "inputs": inputs,
-            "parent_run_id": parent_run_id,
+            "parent_run_id": parent_run_id if parent_run_id else None,
             "tags": tags,
             "metadata": metadata,
         }
@@ -283,3 +287,39 @@ class AgentExecutorAsyncIteratorCallbackHandler(AsyncIteratorCallbackHandler):
         self.queue.put_nowait(dumps(data))
         self.out = True
         # self.done.set()
+
+
+if __name__ == "__main__":
+    tools = [DuckDuckGoSearchRun(name="DuckDuckGo Search")]
+    llm = ChatZhipuAI(
+        model_name="glm-4-0520",
+        api_key="df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc",
+        openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
+    )
+    agent = initialize_agent(
+    tools,
+    llm,  # 选择模型
+    agent=AgentType.OPENAI_FUNCTIONS,
+    verbose=True,
+    )
+    async def run_agent():
+        handler = AgentExecutorAsyncIteratorCallbackHandler()
+        
+        # 执行代理任务（异步方式）
+        await agent.arun(
+            "查询 Python 教程",
+            callbacks=[handler]  # 注册回调处理器
+        )
+        
+        # 处理事件队列
+        while True:
+            try:
+                data_str = await handler.queue.get()
+                data = json.loads(data_str)
+                print(f"Received event: {data}")
+                # ... 同前处理逻辑 ...
+                handler.queue.task_done()
+            except asyncio.QueueEmpty:
+                break
+
+    asyncio.run(run_agent())

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple, Union
@@ -136,11 +135,11 @@ class History(BaseModel):
         return cls.from_data(_convert_message_to_dict(message=message))
 
 
-if __name__ == "__main__":
-    hum_msg = HumanMessage(content="你好")
-    ai_msg = AIMessage(content="",additional_kwargs={"function_call":{"name":"search", "argmuent":{"query":"Python教程"}}})
-    # print(_convert_message_to_dict(hum_msg))
-    print(_convert_message_to_dict(ai_msg))
-    his = History.from_message(ai_msg)
+# if __name__ == "__main__":
+#     hum_msg = HumanMessage(content="你好")
+#     ai_msg = AIMessage(content="" ,additional_kwargs={"function_call":{"name":"search", "argmuent":{"query":"Python教程"}}})
+#     # print(_convert_message_to_dict(hum_msg))
+#     print(_convert_message_to_dict(ai_msg))
+#     #his = History.from_message(ai_msg)
     
-    print(his)
+#     #print(his)

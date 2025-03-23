@@ -8,6 +8,9 @@
 
 [Pydantic文档](https://pydantic.com.cn/#pydanti)
 
+
+将langchain_community包的langchain_community\utilities\duckduckgo_search.py第31行`backend: str = "api"`修改为`backend: str = "auto"`
+
 ## 嵌入模块
 
 ## 检索模块
