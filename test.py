@@ -108,7 +108,7 @@ async def main():
         verbose=True
     )
 
-    question = "我想知道A Novel Contrastive Signal Generative Framework for Accurate Graph Learning这篇文章的主要内容，这是在知识库的文章，用中文回答我的问题"
+    question = "我想知道OBJECT-ORIENTED RELATIONAL DISTILLATION FOR OBJECT DETECTION这篇文章的主要内容，这是在知识库的文章，用中文回答我的问题"
     result = await agent_executor.ainvoke({"input": question})
     print("最终答案：", result.get("output"))
 
