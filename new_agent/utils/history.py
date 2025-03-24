@@ -115,6 +115,8 @@ class History(BaseModel):
         if self.content is None:
             self.content = ""
 
+        return self
+
     @classmethod
     def from_data(cls, h: Union[List, Tuple, Dict]) -> "History":
         '''
