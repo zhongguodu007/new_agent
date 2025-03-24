@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
 from new_agent.retrival.base import NewRetriever
-from langchain.chains import RetrievalQA
+from langchain.chains.retrieval_qa.base import RetrievalQA
 import asyncio
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import initialize_agent, AgentType
@@ -9,10 +9,84 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain.callbacks.manager import AsyncCallbackManager
 from new_agent.callbacks.base import AgentExecutorAsyncIteratorCallbackHandler
 from langchain_community.tools import Tool
-from langchain.agents import AgentExecutor
+from langchain.agents import AgentExecutor,create_react_agent
 from langchain.prompts import ChatPromptTemplate
-from langchain.agents import create_react_agent
 from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory
+import subprocess
+from typing import Union
+from new_agent.tools.web_browser_tool import WebBrowserTool
+from new_agent.agents.all_agents import init_rag_agent
+
+class WindowsTerminalTool(Tool):
+    def __init__(self):
+        super().__init__(
+            name="Windows终端",  # 必填
+            func=self._run,     # 必填：指向具体执行方法
+            description="执行Windows终端命令，支持命令：dir, ipconfig..."  # 必填
+        )
+    async def _run(self, command: str) -> Union[str, Exception]:
+        # 安全检查：仅允许白名单内的命令
+        # cmd = command.strip().split()[0]
+        # if cmd not in ALLOWED_COMMANDS:
+        #     return f"错误：禁止执行命令 '{cmd}'，仅允许以下命令：{', '.join(ALLOWED_COMMANDS.keys())}"
+        
+        try:
+            # 执行命令并捕获输出
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10  # 防止长时间运行
+            )
+            #if result.returncode == 0:
+            return f"输出：\n{result.stdout}"
+            # else:
+            #     return f"错误：{result.stderr}"
+        except subprocess.TimeoutExpired:
+            return "错误：命令执行超时"
+        except Exception as e:
+            return f"异常：{str(e)}"
+
+    def _arun(self, command: str):
+        # 异步执行（此处简化为同步）
+        return self._run(command)
+
+async def main3():
+    callback_handler = AgentExecutorAsyncIteratorCallbackHandler()
+    callback_manager = AsyncCallbackManager([callback_handler])
+    llm = ChatZhipuAI(
+        model_name="glm-4-0520",
+        api_key="df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc",
+        openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
+        temperature=1 
+    )
+    agent = init_rag_agent(callback_manager=callback_manager,llm=llm)
+    
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True
+    )
+    def get_user_input():
+        user_input = input("User: ")
+        return {
+            "input": user_input,
+            "chat_history": memory.chat_memory.messages  # 传递历史记录
+        }
+
+    def save_response(response):
+        memory.save_context(
+            inputs={"input": response["input"]},
+            outputs={"output": response["output"]}
+        )
+    while True:
+        user_input = get_user_input()
+        try:
+            response = await agent.ainvoke(user_input)
+            print(f"Agent: {response['output']}")
+            save_response(response)
+        except Exception as e:
+            print(f"Error: {e}")
 async def main1():
     # 创建回调管理器并注册你的回调处理器
     callback_handler = AgentExecutorAsyncIteratorCallbackHandler()
@@ -51,22 +125,9 @@ async def main1():
         name="DuckDuckGo Search",
         description="用于从互联网上搜索公开信息。适用于开放域问题（如最新新闻、教程等）。"
     )
-    # 初始化代理（Agent）
-    # agent = initialize_agent(
-    #     tools=[search_tool, retrieval_tool],
-    #     llm=llm,
-    #     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    #     verbose=False,
-    #     callback_manager=callback_manager,
-    #     # retriever=retriever
-    # )
-
-    # # 执行代理任务
-    # try:
-    #     result = await agent.ainvoke("我想知道A Novel Contrastive Signal Generative Framework for Accurate Graph Learning这篇文章的主要内容，这是在知识库的文章，用中文回答我的问题")
-    #     print("最终结果：", result)
-    # except Exception as e:
-    #     print("执行代理时出错：", e)
+    win_tool = WindowsTerminalTool()
+    web_tool = WebBrowserTool()
+   
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True
@@ -95,16 +156,15 @@ async def main1():
         """
     )
 
-
     agent = create_react_agent(
         llm=llm,
-        tools=[retrieval_tool, search_tool],
+        tools=[retrieval_tool, search_tool, win_tool, web_tool],
         prompt=prompt,
     )
 
     agent_executor = AgentExecutor.from_agent_and_tools(
         agent=agent,
-        tools=[retrieval_tool, search_tool],
+        tools=[retrieval_tool, search_tool, win_tool, web_tool],
         handle_parsing_errors=True,  # 自动处理解析错误
         callback_manager=AsyncCallbackManager(
             [AgentExecutorAsyncIteratorCallbackHandler()]
@@ -119,7 +179,6 @@ async def main1():
         }
 
     def save_response(response):
-        # 将代理的输出保存到记忆中
         memory.save_context(
             inputs={"input": response["input"]},
             outputs={"output": response["output"]}
@@ -127,12 +186,28 @@ async def main1():
     while True:
         user_input = get_user_input()
         try:
-            # 调用代理并传递 chat_history
             response = await agent_executor.ainvoke(user_input)
             print(f"Agent: {response['output']}")
             save_response(response)
         except Exception as e:
             print(f"Error: {e}")
+
+     # 初始化代理（Agent）
+    # agent = initialize_agent(
+    #     tools=[search_tool, retrieval_tool],
+    #     llm=llm,
+    #     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    #     verbose=False,
+    #     callback_manager=callback_manager,
+    #     # retriever=retriever
+    # )
+
+    # # 执行代理任务
+    # try:
+    #     result = await agent.ainvoke("我想知道A Novel Contrastive Signal Generative Framework for Accurate Graph Learning这篇文章的主要内容，这是在知识库的文章，用中文回答我的问题")
+    #     print("最终结果：", result)
+    # except Exception as e:
+    #     print("执行代理时出错：", e)
 
     #question = "我想知道OBJECT-ORIENTED RELATIONAL DISTILLATION FOR OBJECT DETECTION这篇文章的主要内容，这是在知识库的文章，用中文回答我的问题"
     # question = "我想知道OBJECT-ORIENTED RELATIONAL DISTILLATION FOR OBJECT DETECTION这篇文章的具体方法是什么，这是在知识库的文章，用中文回答我的问题"
@@ -195,36 +270,5 @@ def main2():
     agent.invoke({"input": "能再说得详细一点吗？"})
 
 if __name__ == "__main__":
-    asyncio.run(main1())
-    # main2()
-# if __name__ == '__main__':
-#     chroma_store = Chroma(
-#         collection_name="rag2",
-#         persist_directory="./rag"
-#     )
-
-#     retreval = NewRetriever(
-#         store=chroma_store,
-#         search_kwargs={"n_results":8}
-#     )
-#     llm = ChatOpenAI(
-#         model_name="glm-4-0520",
-#         api_key="df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc",
-#         openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
-#     )
-#     prompt_template = ChatPromptTemplate.from_template(
-#     "使用以下上下文回答最后的问题。如果你不知道答案，请直接说你不知道，不要尝试编造答案。\n\n上下文:\n{context}\n\n问题: {question}"
-#     )
-#     qa_chain = RetrievalQA.from_chain_type(
-#     llm=llm, 
-#     chain_type="stuff",  # 或者选择其他适合的类型，如"map_reduce", "refine", "map_rerank"
-#     retriever=retreval,
-#     return_source_documents=False,
-#     chain_type_kwargs={"prompt":prompt_template}
-#     )
-
-#     query = "我想知道A Novel Contrastive Signal Generative Framework for Accurate Graph Learning这篇文章的主要内容"
-
-#     result = qa_chain(query)
-#     print(result)
+    asyncio.run(main3())
    
