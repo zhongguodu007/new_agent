@@ -6,7 +6,8 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_community.chat_models import ChatZhipuAI
 from langchain_chroma import Chroma
 from new_agent.retrival.base import NewRetriever
-from langchain.chains.retrieval_qa.base import RetrievalQA
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.utilities import GoogleSearchAPIWrapper
 
 def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
     
@@ -109,8 +110,21 @@ def init_search_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI) -
         Final Answer: [最终答案]
         """
     )
-    tools = []
-    
+    search_tool1 = DuckDuckGoSearchRun(
+        name="DuckDuckGo Search",
+        description="使用DuckDuckGo搜索引擎从互联网上获取公开信息。适合用于寻找开放域问题的答案，如最新的新闻更新、技术教程或广泛的知识查询。",
+    )
+    search = GoogleSearchAPIWrapper(
+        google_api_key="AIzaSyCcmRzm1bFVENGV4-HOSbcLeT4zRo5LEyE",
+        google_cse_id="72de5f772041b46fd"
+    )
+    search_tool2 = Tool(
+        name="Google Search",
+        func=search.run,
+        description="通过Google搜索引擎访问实时和高度相关的搜索结果。特别适用于需要精准、时效性强的信息查询，例如科技动态、学术资料查找等。",
+    )
+    tools = [search_tool1, search_tool2]
+
     agent = create_react_agent(
         llm=llm,
         tools=tools,

@@ -6,6 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import initialize_agent, AgentType
 from langchain_community.chat_models import ChatZhipuAI
 from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.utilities import GoogleSearchAPIWrapper
 from langchain.callbacks.manager import AsyncCallbackManager
 from new_agent.callbacks.base import AgentExecutorAsyncIteratorCallbackHandler
 from langchain_community.tools import Tool
@@ -15,7 +16,7 @@ from langchain.memory import ConversationBufferMemory, ConversationBufferWindowM
 import subprocess
 from typing import Union
 from new_agent.tools.web_browser_tool import WebBrowserTool
-from new_agent.agents.all_agents import init_rag_agent
+from new_agent.agents.all_agents import init_rag_agent, init_search_agent
 
 class WindowsTerminalTool(Tool):
     def __init__(self):
@@ -61,7 +62,7 @@ async def main3():
         openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
         temperature=1 
     )
-    agent = init_rag_agent(callback_manager=callback_manager,llm=llm)
+    agent = init_search_agent(callback_manager=callback_manager,llm=llm)
     
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -125,8 +126,16 @@ async def main1():
         name="DuckDuckGo Search",
         description="用于从互联网上搜索公开信息。适用于开放域问题（如最新新闻、教程等）。"
     )
-    win_tool = WindowsTerminalTool()
-    web_tool = WebBrowserTool()
+    search = GoogleSearchAPIWrapper(
+        google_api_key="AIzaSyCcmRzm1bFVENGV4-HOSbcLeT4zRo5LEyE",
+        google_cse_id="72de5f772041b46fd"
+    )
+    search_tool1 = Tool(
+            name="Google Search",
+            func=search.run,
+            description="适用于需要实时信息的问题回答。",
+        )
+
    
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -151,6 +160,7 @@ async def main1():
         Action: [必须是工具列表中的名称（如：本地知识库 或 DuckDuckGo Search）]
         Action Input: [传递给工具的参数]
 
+        结合工具的输出结果总结你的答案，如果没有确切答案可以使用不同的搜索工具来查找更多信息。
         如果问题已解决，请直接输出：
         Final Answer: [最终答案]
         """
@@ -158,13 +168,13 @@ async def main1():
 
     agent = create_react_agent(
         llm=llm,
-        tools=[retrieval_tool, search_tool, win_tool, web_tool],
+        tools=[search_tool1, search_tool],
         prompt=prompt,
     )
 
     agent_executor = AgentExecutor.from_agent_and_tools(
         agent=agent,
-        tools=[retrieval_tool, search_tool, win_tool, web_tool],
+        tools=[search_tool1, search_tool],
         handle_parsing_errors=True,  # 自动处理解析错误
         callback_manager=AsyncCallbackManager(
             [AgentExecutorAsyncIteratorCallbackHandler()]
