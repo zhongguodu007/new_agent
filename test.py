@@ -4,7 +4,7 @@ from langchain.chains.retrieval_qa.base import RetrievalQA
 import asyncio
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import initialize_agent, AgentType
-from langchain_community.chat_models import ChatZhipuAI
+from langchain_community.chat_models import ChatZhipuAI, ChatTongyi
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_community.utilities import GoogleSearchAPIWrapper
 from langchain.callbacks.manager import AsyncCallbackManager
@@ -74,12 +74,14 @@ async def main3():
             "input": user_input,
             "chat_history": memory.chat_memory.messages  # 传递历史记录
         }
-
+        
+            
     def save_response(response):
         memory.save_context(
-            inputs={"input": response["input"]},
+            inputs={"user": response["input"]},
             outputs={"output": response["output"]}
         )
+        print("current history:",memory.chat_memory.messages, 'History type:',type(memory.chat_memory.messages))
     while True:
         user_input = get_user_input()
         try:
@@ -88,6 +90,9 @@ async def main3():
             save_response(response)
         except Exception as e:
             print(f"Error: {e}")
+
+
+
 async def main1():
     # 创建回调管理器并注册你的回调处理器
     callback_handler = AgentExecutorAsyncIteratorCallbackHandler()

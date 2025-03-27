@@ -1,7 +1,7 @@
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, PrivateAttr
+from langchain_core.pydantic_v1 import BaseModel, Field, PrivateAttr
 from langchain_chroma import Chroma
 import sys
 import os

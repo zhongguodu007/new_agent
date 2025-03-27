@@ -11,7 +11,7 @@ from langchain_core.outputs import LLMResult
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from langchain_glm.agent_toolkits import BaseToolOutput
+from new_agent.tools.tool import BaseToolOutput
 from new_agent.utils.history import History
 
 def dumps(obj: Dict) -> str:

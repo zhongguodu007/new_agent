@@ -10,6 +10,7 @@
 
 
 将langchain_community包的langchain_community\utilities\duckduckgo_search.py第31行`backend: str = "api"`修改为`backend: str = "auto"`
+<!-- 将langchain_core依赖包的\langchain_core\messages\human.py第38行由原来的`type: Literal["human"]  = "human"`修改为`type:str  = "human"` -->
 
 ## 嵌入模块
 
