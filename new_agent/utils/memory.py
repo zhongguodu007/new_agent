@@ -316,9 +316,9 @@ if __name__ == "__main__":
     memory.save_context({"input":"101"}, {"output":"102"})
     memory.save_custom_context("今天是2025年4月18日", types="date")
     print(memory.get_all_memory())
-    memory.save_memory_to_file("memory.json")
+    memory.save_memory_to_file("./chat/测试对话.json")
     memory.clear()
     print('After clear: ',memory.get_all_memory())
-    memory.load_memory_from_file("memory.json")
+    memory.load_memory_from_file("./chat/测试对话.json")
     print('After load: ',memory.get_all_memory())
     
