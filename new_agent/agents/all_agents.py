@@ -4,6 +4,7 @@ from langchain_community.tools import Tool
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.chat_models import ChatZhipuAI
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_chroma import Chroma
 from new_agent.retrival.base import NewRetriever
 from langchain_community.tools import DuckDuckGoSearchRun
@@ -37,8 +38,8 @@ def create_retrieval_tool(persist_directory: str,collection_name: str, collectio
         description=f"从{collection_name}知识库中检索相关信息，返回格式化后的文档内容和元数据。"
     )
 
-def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI, 
-                   persist_directory: str = './rag', collection_name: str ='rag2', collection: List[str]=[]
+def init_rag_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel, 
+                   persist_directory: str = './rag', collection_name: str ='local_database', collection: List[str]=[]
                    ) -> AgentExecutor:
     # qa_tools = []
     # if len(collection_name) == 1:
@@ -61,10 +62,10 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI,
         此外，以下是之前的对话历史：
         {chat_history}
 
-        使用这些工具来回答用户的问题：“{input}”。你之前已经进行了以下思考和行动：
+        使用这些工具来回答用户的问题请在必要时使用工具，如果问题简单可以不使用工具直接给出最终答案：“{input}”。你之前已经进行了以下思考和行动：
         {agent_scratchpad}
 
-        请严格从以下工具中选择一个执行，如果有多个知识库请一次检索每个知识库获取相关答案保证完整性：
+        如果需要使用工具，请严格从以下工具中选择一个执行：
         工具列表：{tool_names}
 
         输出格式必须包含：
@@ -91,7 +92,7 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI,
     )
     return agent_executor
 
-def init_search_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI) -> AgentExecutor:
+def init_search_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel) -> AgentExecutor:
     prompt = ChatPromptTemplate.from_template(
         """
         你正在以一个智能体的身份运行。你拥有以下工具：
@@ -99,10 +100,10 @@ def init_search_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI) -
         此外，以下是之前的对话历史：
         {chat_history}
 
-        使用这些工具来回答用户的问题：“{input}”。你之前已经进行了以下思考和行动：
+        使用这些工具来回答用户的问题请在必要时使用工具，如果问题简单可以不使用工具直接给出最终答案：“{input}”。你之前已经进行了以下思考和行动：
         {agent_scratchpad}
 
-        请严格从以下工具中选择一个执行：
+        如果需要使用工具，请严格从以下工具中选择一个执行：
         工具列表：{tool_names}
 
         输出格式必须包含：

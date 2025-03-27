@@ -26,9 +26,9 @@ class NewRetriever(BaseRetriever):
 
     def __init__(self, **data):
         BaseRetriever.__init__(self)
-        self.search_kwargs = data.get("search_kwargs",{})
+        self.search_kwargs = data.get("search_kwargs",{'n_results': 8})
         self.store = data["store"]
-        self.collection_name = data.get("collection_name",[])
+        self.collection = data.get("collection",[])
         self.embeddingmodel = EmbeddingModel(
             zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc',
               zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
@@ -42,7 +42,7 @@ class NewRetriever(BaseRetriever):
 
         if len(self.collection) > 0:
             filter_condition = {'collection':{"$in":self.collection}}
-            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], filter_condition=filter_condition, **merge_args)
+            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], where=filter_condition, **merge_args)
         else:
             results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], **merge_args)
 
@@ -61,6 +61,7 @@ class NewRetriever(BaseRetriever):
             docs.append(doc)
 
         return docs
+        
     
 
 if __name__ == "__main__":

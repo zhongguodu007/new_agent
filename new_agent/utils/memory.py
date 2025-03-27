@@ -15,9 +15,39 @@ from langchain_core.chat_history import (
 from langchain_core.pydantic_v1 import Field
 from langchain_core.utils import pre_init
 from typing import Any, Dict, Optional, Tuple
+import json
+import aiofiles
+from langchain_core.prompts.prompt import PromptTemplate
+from langchain_core.prompts import BasePromptTemplate
 
 class ContextMessage(HumanMessage):
     type: str = "context"
+
+DEFAULT_SUMMARIZER_TEMPLATE = """逐步总结提供的对话内容，在之前摘要的基础上进行补充，生成新的摘要。
+
+示例
+当前摘要：
+人类询问人工智能对人工智能的看法。人工智能认为人工智能是积极的力量。
+
+新的对话内容：
+人类：为什么你认为人工智能是积极的力量？  
+人工智能：因为人工智能将帮助人类充分发挥潜力。
+
+新的摘要：
+人类询问人工智能对人工智能的看法。人工智能认为人工智能是积极的力量，因为它将帮助人类充分发挥潜力。
+示例结束
+
+当前摘要：
+{summary}
+
+新的对话内容：
+{new_lines}
+
+新的摘要：
+"""
+SUMMARY_PROMPT1 = PromptTemplate(
+    input_variables=["summary", "new_lines"], template=DEFAULT_SUMMARIZER_TEMPLATE
+)
 
 class MemoryChain(BaseChatMemory, SummarizerMixin):
     
@@ -31,8 +61,18 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
     single_limit:int = 1000 # 每个自定义上下文的最大长度
     memory_key: str = "History"#
     moving_summary_buffer: str = ""
+    prompt: BasePromptTemplate = SUMMARY_PROMPT1
 
-
+    @property
+    def memory_cofig(self) -> Dict[str, Any]:
+        return {
+            "human_prefix": self.human_prefix,
+            "ai_prefix": self.ai_prefix,
+            "memory_key": self.memory_key,
+            "k": self.k,
+            "max_token_limit": self.max_token_limit,
+            "single_limit": self.single_limit
+        }
     def _chat_memory_as_str(self, messages: List[BaseMessage]) -> str:
 
         return get_buffer_string(
@@ -41,7 +81,7 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
             ai_prefix=self.ai_prefix,
         )
     
-    def all_messages_as_str(self)->str:
+    def _all_messages_as_str(self)->str:
 
         string_messages = []
         for messsage in self.custom_context.messages:
@@ -53,7 +93,7 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
         return "\n".join([f"History: {self.summary_message.content}", self._chat_memory_as_str(self.chat_memory.messages), all_context ])
     
 
-    def all_messages_as_dict(self)->List[Dict[str, str]]:
+    def _all_messages_as_dict(self)->List[Dict[str, str]]:
         string_messages = []
         string_messages.append({self.memory_key:self.summary_message.content})
 
@@ -101,6 +141,7 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
 
     def _get_input_output(self, inputs: Dict[str, Any], outputs: Dict[str, str]):
         return list(inputs.values())[0], list(outputs.values())[0]
+    
     def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         """Save context from this conversation to buffer."""
         input_str, output_str = self._get_input_output(inputs, outputs)
@@ -116,7 +157,6 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
             self.moving_summary_buffer = self.predict_new_summary(prune, self.moving_summary_buffer)
             self.summary_message = self.summary_message_cls(content=self.moving_summary_buffer)
 
-
     async def asave_context(
         self, inputs: Dict[str, Any], outputs: Dict[str, str]
     ) -> None:
@@ -128,8 +168,8 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
         if len(self.chat_memory.messages) > self.k and self.llm.get_num_tokens_from_messages(self.chat_memory.messages) > self.max_token_limit:
             prune = []
             while self.llm.get_num_tokens_from_messages(self.chat_memory.messages) > self.max_token_limit:
-                prune.append(self.chat_memory.messages.pop(-1))
-                prune.append(self.chat_memory.messages.pop(-1))
+                prune.append(self.chat_memory.messages.pop(0))
+                prune.append(self.chat_memory.messages.pop(0))
             self.moving_summary_buffer = await self.apredict_new_summary(prune, self.moving_summary_buffer)
             self.summary_message = self.summary_message_cls(content=self.moving_summary_buffer)
 
@@ -173,7 +213,15 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
         # 同步执行 clear 和 add_messages
         await self.custom_context.aclear()
         await self.custom_context.aadd_messages(filter_context)
-        
+       
+    def get_contxt_types(self) -> List[str]:
+        """Return all context types."""
+        return [message.type for message in self.custom_context.messages]
+    
+    async def aget_contxt_types(self) -> List[str]:
+        """Return all context types."""
+        messages = await self.custom_context.aget_messages()
+        return [message.type for message in messages]
 
     def get_all_memory(self) -> List[BaseMessage]:
         """Return history buffer."""
@@ -189,6 +237,10 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
     async def aget_summary_message(self) -> BaseMessage:
         """Return history buffer."""
         return self.summary_message
+    
+    def get_summary_message(self) -> BaseMessage:
+        """Return history buffer."""
+        return self.summary_message
 
     @pre_init
     def validate_prompt_input_variables(cls, values: Dict) -> Dict:
@@ -202,18 +254,46 @@ class MemoryChain(BaseChatMemory, SummarizerMixin):
             )
         return values
     
-    def clear(self):
+    def clear(self) -> None:
         super().clear()
         self.custom_context.clear()
         self.summary_message = []
         self.moving_summary_buffer = ""
 
-    async def aclear(self):
+    async def aclear(self) -> None:
         await super().aclear()
         await self.custom_context.aclear()
         self.summary_message = []
         self.moving_summary_buffer = ""
     
+    def save_memory_to_file(self, file_path: str) -> None:
+        """Save memory to a file."""
+
+        memory_cofig = self.memory_cofig
+        memory = self._all_messages_as_dict() # List[Dict[str, str]]
+        all_info = [memory_cofig] + memory
+        json.dump(all_info, open(file_path, "w", encoding="utf-8"), ensure_ascii=False)
+
+    async def asave_memory_to_file(self, file_path: str) -> None:
+        memory_cofig = self.memory_cofig
+        memory =self._all_messages_as_dict()
+        all_info = [memory_cofig] + memory
+        json_content = json.dumps(all_info, ensure_ascii=False, indent=2)
+        async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+            await f.write(json_content)
+
+    def load_memory_from_file(self, file_path: str) -> None:
+        """Load memory from a file."""
+        all_info = json.load(open(file_path, "r", encoding="utf-8"))
+        self.human_prefix = all_info[0]["human_prefix"]
+        self.ai_prefix = all_info[0]["ai_prefix"]
+        self.memory_key = all_info[0]["memory_key"]
+        self.k = all_info[0]["k"]
+        self.max_token_limit = all_info[0]["max_token_limit"]
+        self.single_limit = all_info[0]["single_limit"]
+        self.load_memory(all_info[1:])
+
+        
     def load_memory_variables(self) -> dict:
         """实现具体逻辑，例如从内存中加载变量"""
         # 示例：返回一个包含内存变量的字典
@@ -233,13 +313,12 @@ if __name__ == "__main__":
     )
     memory = MemoryChain(llm=llm)
     memory.load_memory([{"AI":"你好"},{"Human":"你好"},{"History":"昨天是2025年4月17日"}])
-    print(memory.all_messages_as_str())
-    print(memory.all_messages_as_dict())
     memory.save_context({"input":"101"}, {"output":"102"})
-    print(memory.all_messages_as_str())
     memory.save_custom_context("今天是2025年4月18日", types="date")
-    print('after\n')
-    print(memory.all_messages_as_str())
-    print(memory.all_messages_as_dict())
     print(memory.get_all_memory())
+    memory.save_memory_to_file("memory.json")
+    memory.clear()
+    print('After clear: ',memory.get_all_memory())
+    memory.load_memory_from_file("memory.json")
+    print('After load: ',memory.get_all_memory())
     

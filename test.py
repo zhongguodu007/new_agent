@@ -12,9 +12,10 @@ from new_agent.callbacks.base import AgentExecutorAsyncIteratorCallbackHandler
 from langchain_community.tools import Tool
 from langchain.agents import AgentExecutor,create_react_agent
 from langchain.prompts import ChatPromptTemplate
-from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory
+from new_agent.utils.memory import MemoryChain
 import subprocess
 from typing import Union
+from new_agent.embeddings.base import EmbeddingModel
 from new_agent.tools.web_browser_tool import WebBrowserTool
 from new_agent.agents.all_agents import init_rag_agent, init_search_agent
 
@@ -62,17 +63,18 @@ async def main3():
         openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
         temperature=1 
     )
-    agent = init_search_agent(callback_manager=callback_manager,llm=llm)
+    agent = init_rag_agent(callback_manager=callback_manager,llm=llm)
     
-    memory = ConversationBufferMemory(
+    memory = MemoryChain(
         memory_key="chat_history",
-        return_messages=True
+        return_messages=True,
+        llm=llm
     )
     def get_user_input():
         user_input = input("User: ")
         return {
             "input": user_input,
-            "chat_history": memory.chat_memory.messages  # 传递历史记录
+            "chat_history": memory.get_all_memory()  # 传递历史记录
         }
         
             
@@ -81,7 +83,7 @@ async def main3():
             inputs={"user": response["input"]},
             outputs={"output": response["output"]}
         )
-        print("current history:",memory.chat_memory.messages, 'History type:',type(memory.chat_memory.messages))
+        print("current history:",memory.get_all_memory(), 'History type:',type(memory.chat_memory.messages))
     while True:
         user_input = get_user_input()
         try:
@@ -91,7 +93,12 @@ async def main3():
         except Exception as e:
             print(f"Error: {e}")
 
-
+def main4():
+    store = Chroma(persist_directory='./rag', collection_name='local_database')
+    model = EmbeddingModel(zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc', zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
+    retrieval = NewRetriever(store=store,embeddingmodel=model, collection=['与蒸馏相关的论文'])
+    results = retrieval.get_relevant_documents('OBJECT-ORIENTED RELATIONAL DISTILLATION FOR OBJECT DETECTION这篇文章的主要内容',)
+    print(results)
 
 async def main1():
     # 创建回调管理器并注册你的回调处理器
