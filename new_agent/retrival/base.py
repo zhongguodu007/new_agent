@@ -14,6 +14,7 @@ class NewRetriever(BaseRetriever):
 
     search_kwargs: Dict[str, Any] = Field(default_factory=dict)
     store: Chroma = None
+    collection: List[str] = []
 
     embeddingmodel: EmbeddingModel = None
 
@@ -27,6 +28,7 @@ class NewRetriever(BaseRetriever):
         BaseRetriever.__init__(self)
         self.search_kwargs = data.get("search_kwargs",{})
         self.store = data["store"]
+        self.collection_name = data.get("collection_name",[])
         self.embeddingmodel = EmbeddingModel(
             zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc',
               zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
@@ -38,7 +40,11 @@ class NewRetriever(BaseRetriever):
 
         query_embed = asyncio.run(self.embeddingmodel.aembed_query(query))
 
-        results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], **merge_args)
+        if len(self.collection) > 0:
+            filter_condition = {'collection':{"$in":self.collection}}
+            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], filter_condition=filter_condition, **merge_args)
+        else:
+            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], **merge_args)
 
         document = results['documents'][0]
         metadatas = results['metadatas'][0]

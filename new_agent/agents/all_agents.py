@@ -10,7 +10,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_community.utilities import GoogleSearchAPIWrapper
 from typing import List
 
-def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
+def create_retrieval_tool(persist_directory: str,collection_name: str, collection: List[str])->Tool:
     
     chroma_store = Chroma(
             collection_name=collection_name,
@@ -18,7 +18,8 @@ def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
         )
     retriever = NewRetriever(
             store=chroma_store,
-            search_kwargs={"n_results":8}
+            search_kwargs={"n_results":8},
+            collection=collection
         )
     def retrieve_documents(query: str) -> str:
         docs = retriever.get_relevant_documents(query)
@@ -37,18 +38,21 @@ def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
     )
 
 def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI, 
-                   persist_directory: str = './rag', collection_name: list[str]=['rag2'], 
+                   persist_directory: str = './rag', collection_name: str ='rag2', collection: List[str]=[]
                    ) -> AgentExecutor:
-    qa_tools = []
-    if len(collection_name) == 1:
-        collection_name = collection_name[0]
-        retrieval_tool = create_retrieval_tool(persist_directory, collection_name)
-        qa_tools = [retrieval_tool]
+    # qa_tools = []
+    # if len(collection_name) == 1:
+    #     collection_name = collection_name[0]
+    #     retrieval_tool = create_retrieval_tool(persist_directory, collection_name)
+    #     qa_tools = [retrieval_tool]
 
-    else:
-        for collection in collection_name:
-            retrieval_tool = create_retrieval_tool(persist_directory, collection)
-            qa_tools.append(retrieval_tool)
+    # else:
+    #     for collection in collection_name:
+    #         retrieval_tool = create_retrieval_tool(persist_directory, collection)
+    #         qa_tools.append(retrieval_tool)
+
+    qa_tools = [create_retrieval_tool(persist_directory, collection_name=collection_name, collection=collection)]
+
 
     prompt = ChatPromptTemplate.from_template(
         """
@@ -148,7 +152,7 @@ class AgentToolKit:
         self.llm = llm
         self.tools = []
 
-    def _create_retrieval_tool(self, persist_directory: str, collection_name: str) -> Tool:
+    def _create_retrieval_tool(self, persist_directory: str, collection_name: str, collection: List[str]=[]) -> Tool:
         """
         创建基于 Chroma 数据库的检索工具。
         """
@@ -158,7 +162,8 @@ class AgentToolKit:
         )
         retriever = NewRetriever(
             store=chroma_store,
-            search_kwargs={"n_results": 8}
+            search_kwargs={"n_results": 8},
+            collection=collection
         )
 
         def retrieve_documents(query: str) -> str:
@@ -177,14 +182,13 @@ class AgentToolKit:
             description=f"从{collection_name}知识库中检索相关信息，返回格式化后的文档内容和元数据。",
         )
 
-    def init_rag_agent(self, persist_directory: str = './rag', collection_names: List[str] = ['rag2']) -> AgentExecutor:
+    def init_rag_agent(self, persist_directory: str = './rag', collection_name: str = 'rag2', collection: List[str]=[]) -> AgentExecutor:
         """
         初始化 RAG 智能体。
         """
-        qa_tools = []
-        for collection_name in collection_names:
-            retrieval_tool = self._create_retrieval_tool(persist_directory, collection_name)
-            qa_tools.append(retrieval_tool)
+        
+        retrieval_tool = self._create_retrieval_tool(persist_directory, collection_name, collection=collection)
+        qa_tools = [retrieval_tool]
 
         prompt = ChatPromptTemplate.from_template(
             """
