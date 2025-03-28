@@ -21,6 +21,7 @@ from langchain_core.messages import (
     ToolMessageChunk,
 )
 from zhipuai.core import BaseModel
+from pydantic import model_validator
 
 logger = logging.getLogger()
 
@@ -44,13 +45,13 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
         if "function_call" in message.additional_kwargs:
             message_dict["function_call"] = message.additional_kwargs["function_call"]
             # If function call only, content is None not empty string
-            if message_dict["content"] == "":
-                message_dict["content"] = None
+            # if message_dict["content"] == "":
+            #     message_dict["content"] = None
         if "tool_calls" in message.additional_kwargs:
             message_dict["tool_calls"] = message.additional_kwargs["tool_calls"]
             # If tool calls only, content is None not empty string
-            if message_dict["content"] == "":
-                message_dict["content"] = None
+            # if message_dict["content"] == "":
+            #     message_dict["content"] = None
     elif isinstance(message, SystemMessage):
         message_dict = {"role": "system", "content": message.content}
     elif isinstance(message, FunctionMessage):
@@ -85,9 +86,15 @@ class History(BaseModel):
     content: str
 
     def to_msg_tuple(self):
+        '''
+        将角色映射为 (role, content)元组
+        '''
         return "ai" if self.role == "assistant" else "human", self.content
 
     def to_msg_template(self, is_raw=True) -> ChatMessagePromptTemplate:
+        '''
+        将消息字典转换成 prompt模板
+        '''
         role_maps = {
             "ai": "assistant",
             "human": "user",
@@ -103,11 +110,19 @@ class History(BaseModel):
             "jinja2",
             role=role,
         )
+    
+    @model_validator(mode="after")
+    def validate_content(self):
+        if self.content is None:
+            self.content = ""
 
     @classmethod
     def from_data(cls, h: Union[List, Tuple, Dict]) -> "History":
+        '''
+        将输入的列表、字典、元组转换成History对象
+        '''
         if isinstance(h, (list, tuple)) and len(h) >= 2:
-            h = cls(role=h[0], content=h[1])
+            h = cls(role=h[0], content=h[1] if h[1] is not None else "")
         elif isinstance(h, dict):
             h = cls(**h)
 
@@ -115,4 +130,17 @@ class History(BaseModel):
 
     @classmethod
     def from_message(cls, message: BaseMessage) -> "History":
+        '''
+        将消息转换成History
+        '''
         return cls.from_data(_convert_message_to_dict(message=message))
+
+
+if __name__ == "__main__":
+    hum_msg = HumanMessage(content="你好")
+    ai_msg = AIMessage(content="",additional_kwargs={"function_call":{"name":"search", "argmuent":{"query":"Python教程"}}})
+    # print(_convert_message_to_dict(hum_msg))
+    print(_convert_message_to_dict(ai_msg))
+    his = History.from_message(ai_msg)
+    
+    print(his)

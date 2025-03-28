@@ -29,7 +29,7 @@ for i in range(10):
         tool_input=code_input,
         log='111'
     )
-    print(result)
+    print(result.code_output)
 #     assert (
 #         out.data
 #         != """Access：code_interpreter,python_repl_ast, Message: print('Hello, World!')

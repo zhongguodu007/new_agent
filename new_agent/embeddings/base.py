@@ -1,5 +1,4 @@
 
-
 from pydantic import (
     BaseModel,
     Field,
@@ -42,7 +41,7 @@ class EmbeddingModel(BaseModel, Embeddings):
     client: Any = None
     model: str = 'embedding-2'
     chunk_size: int = 10
-    model_kwargs: Dict[str, Any] = Field(default_factory=dict)
+    model_kwargs: Dict[str, Any] = Field(default_factory=dict, description="Model args for embedding")
 
     class Cofig:
 
