@@ -1,0 +1,46 @@
+{
+    "doc_id": 15,
+    "text_id": 1393,
+    "1": {
+        "file_path": "new_agent/file/sensors-23-06518.pdf"
+    },
+    "2": {
+        "file_path": "new_agent/file/NeurIPS-簇感知的半监督学习.pdf"
+    },
+    "3": {
+        "file_path": "new_agent/file/跨领域语言模型的层次关系蒸馏.pdf"
+    },
+    "4": {
+        "file_path": "new_agent/file/用关系蒸馏增强细粒度潮流物体检索.pdf"
+    },
+    "5": {
+        "file_path": "new_agent/file/跨实体的关系自蒸馏.pdf"
+    },
+    "6": {
+        "file_path": "new_agent/file/对物体识别的成对差异关系蒸馏.pdf"
+    },
+    "7": {
+        "file_path": "new_agent/file/用于图像复制检测的关系蒸馏.pdf"
+    },
+    "8": {
+        "file_path": "new_agent/file/基于相似度的关系蒸馏方法.pdf"
+    },
+    "9": {
+        "file_path": "new_agent/file/用关系蒸馏增强对比学习.pdf"
+    },
+    "10": {
+        "file_path": "new_agent/file/RankEncoder.pdf"
+    },
+    "11": {
+        "file_path": "new_agent/file/对目标检测的面向目标的关系蒸馏.pdf"
+    },
+    "12": {
+        "file_path": "new_agent/file/1727.pdf"
+    },
+    "13": {
+        "file_path": "new_agent/file/对视频识别检测的关系蒸馏网络.pdf"
+    },
+    "14": {
+        "file_path": "new_agent/file/基于文本关系推理的关系蒸馏.pdf"
+    }
+}

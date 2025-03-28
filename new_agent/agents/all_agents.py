@@ -57,7 +57,7 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel,
 
     prompt = ChatPromptTemplate.from_template(
         """
-        你正在以一个智能体的身份运行。你拥有以下工具：
+        你正在以一个具有本地知识检索功能的智能体的身份运行。你拥有以下工具：
         {tools}
         此外，以下是之前的对话历史：
         {chat_history}
@@ -65,7 +65,7 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel,
         使用这些工具来回答用户的问题请在必要时使用工具，如果问题简单可以不使用工具直接给出最终答案：“{input}”。你之前已经进行了以下思考和行动：
         {agent_scratchpad}
 
-        如果需要使用工具，请严格从以下工具中选择一个执行：
+        简单的问题不需要使用工具，如果需要使用工具，请严格从以下工具中选择一个执行：
         工具列表：{tool_names}
 
         输出格式必须包含：
@@ -95,7 +95,7 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel,
 def init_search_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel) -> AgentExecutor:
     prompt = ChatPromptTemplate.from_template(
         """
-        你正在以一个智能体的身份运行。你拥有以下工具：
+        你正在以一个具有网络搜索功能的智能体的身份运行。你拥有以下工具：
         {tools}
         此外，以下是之前的对话历史：
         {chat_history}

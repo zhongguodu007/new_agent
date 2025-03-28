@@ -1,7 +1,10 @@
 [
     {
         "\u4e0e\u84b8\u998f\u76f8\u5173\u7684\u8bba\u6587": [
+<<<<<<< HEAD
             [
+=======
+>>>>>>> main2
                 "NeurIPS-\u7c07\u611f\u77e5\u7684\u534a\u76d1\u7763\u5b66\u4e60.pdf",
                 "RankEncoder.pdf",
                 "sensors-23-06518.pdf",
@@ -15,7 +18,10 @@
                 "\u7528\u5173\u7cfb\u84b8\u998f\u589e\u5f3a\u7ec6\u7c92\u5ea6\u6f6e\u6d41\u7269\u4f53\u68c0\u7d22.pdf",
                 "\u8de8\u5b9e\u4f53\u7684\u5173\u7cfb\u81ea\u84b8\u998f.pdf",
                 "\u8de8\u9886\u57df\u8bed\u8a00\u6a21\u578b\u7684\u5c42\u6b21\u5173\u7cfb\u84b8\u998f.pdf"
+<<<<<<< HEAD
             ]
+=======
+>>>>>>> main2
         ]
     }
 ]
