@@ -1,7 +1,7 @@
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, PrivateAttr
+from langchain_core.pydantic_v1 import BaseModel, Field, PrivateAttr
 from langchain_chroma import Chroma
 import sys
 import os
@@ -14,6 +14,7 @@ class NewRetriever(BaseRetriever):
 
     search_kwargs: Dict[str, Any] = Field(default_factory=dict)
     store: Chroma = None
+    collection: List[str] = []
 
     embeddingmodel: EmbeddingModel = None
 
@@ -25,8 +26,9 @@ class NewRetriever(BaseRetriever):
 
     def __init__(self, **data):
         BaseRetriever.__init__(self)
-        self.search_kwargs = data.get("search_kwargs",{})
+        self.search_kwargs = data.get("search_kwargs",{'n_results': 8})
         self.store = data["store"]
+        self.collection = data.get("collection",[])
         self.embeddingmodel = EmbeddingModel(
             zhipuai_api_key = 'df7f1768a77115a7ffc80e96aad9839b.qAxxUnuN2NLOuFmc',
               zhipuai_api_base='https://open.bigmodel.cn/api/paas/v4/')
@@ -38,7 +40,11 @@ class NewRetriever(BaseRetriever):
 
         query_embed = asyncio.run(self.embeddingmodel.aembed_query(query))
 
-        results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], **merge_args)
+        if len(self.collection) > 0:
+            filter_condition = {'collection':{"$in":self.collection}}
+            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], where=filter_condition, **merge_args)
+        else:
+            results = self.store._collection.query(query_texts=[query], query_embeddings=[query_embed], **merge_args)
 
         document = results['documents'][0]
         metadatas = results['metadatas'][0]
@@ -55,6 +61,7 @@ class NewRetriever(BaseRetriever):
             docs.append(doc)
 
         return docs
+        
     
 
 if __name__ == "__main__":

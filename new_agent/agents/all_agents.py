@@ -4,13 +4,14 @@ from langchain_community.tools import Tool
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.chat_models import ChatZhipuAI
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_chroma import Chroma
 from new_agent.retrival.base import NewRetriever
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_community.utilities import GoogleSearchAPIWrapper
 from typing import List
 
-def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
+def create_retrieval_tool(persist_directory: str,collection_name: str, collection: List[str])->Tool:
     
     chroma_store = Chroma(
             collection_name=collection_name,
@@ -18,7 +19,8 @@ def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
         )
     retriever = NewRetriever(
             store=chroma_store,
-            search_kwargs={"n_results":8}
+            search_kwargs={"n_results":8},
+            collection=collection
         )
     def retrieve_documents(query: str) -> str:
         docs = retriever.get_relevant_documents(query)
@@ -36,31 +38,34 @@ def create_retrieval_tool(persist_directory: str, collection_name: str)->Tool:
         description=f"从{collection_name}知识库中检索相关信息，返回格式化后的文档内容和元数据。"
     )
 
-def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI, 
-                   persist_directory: str = './rag', collection_name: list[str]=['rag2'], 
+def init_rag_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel, 
+                   persist_directory: str = './rag', collection_name: str ='local_database', collection: List[str]=[]
                    ) -> AgentExecutor:
-    qa_tools = []
-    if len(collection_name) == 1:
-        collection_name = collection_name[0]
-        retrieval_tool = create_retrieval_tool(persist_directory, collection_name)
-        qa_tools = [retrieval_tool]
+    # qa_tools = []
+    # if len(collection_name) == 1:
+    #     collection_name = collection_name[0]
+    #     retrieval_tool = create_retrieval_tool(persist_directory, collection_name)
+    #     qa_tools = [retrieval_tool]
 
-    else:
-        for collection in collection_name:
-            retrieval_tool = create_retrieval_tool(persist_directory, collection)
-            qa_tools.append(retrieval_tool)
+    # else:
+    #     for collection in collection_name:
+    #         retrieval_tool = create_retrieval_tool(persist_directory, collection)
+    #         qa_tools.append(retrieval_tool)
+
+    qa_tools = [create_retrieval_tool(persist_directory, collection_name=collection_name, collection=collection)]
+
 
     prompt = ChatPromptTemplate.from_template(
         """
-        你正在以一个智能体的身份运行。你拥有以下工具：
+        你正在以一个具有本地知识检索功能的智能体的身份运行。你拥有以下工具：
         {tools}
         此外，以下是之前的对话历史：
         {chat_history}
 
-        使用这些工具来回答用户的问题：“{input}”。你之前已经进行了以下思考和行动：
+        使用这些工具来回答用户的问题请在必要时使用工具，如果问题简单可以不使用工具直接给出最终答案：“{input}”。你之前已经进行了以下思考和行动：
         {agent_scratchpad}
 
-        请严格从以下工具中选择一个执行，如果有多个知识库请一次检索每个知识库获取相关答案保证完整性：
+        简单的问题不需要使用工具，如果需要使用工具，请严格从以下工具中选择一个执行：
         工具列表：{tool_names}
 
         输出格式必须包含：
@@ -87,18 +92,18 @@ def init_rag_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI,
     )
     return agent_executor
 
-def init_search_agent(callback_manager:AsyncCallbackManager, llm: ChatZhipuAI) -> AgentExecutor:
+def init_search_agent(callback_manager:AsyncCallbackManager, llm: BaseChatModel) -> AgentExecutor:
     prompt = ChatPromptTemplate.from_template(
         """
-        你正在以一个智能体的身份运行。你拥有以下工具：
+        你正在以一个具有网络搜索功能的智能体的身份运行。你拥有以下工具：
         {tools}
         此外，以下是之前的对话历史：
         {chat_history}
 
-        使用这些工具来回答用户的问题：“{input}”。你之前已经进行了以下思考和行动：
+        使用这些工具来回答用户的问题请在必要时使用工具，如果问题简单可以不使用工具直接给出最终答案：“{input}”。你之前已经进行了以下思考和行动：
         {agent_scratchpad}
 
-        请严格从以下工具中选择一个执行：
+        如果需要使用工具，请严格从以下工具中选择一个执行：
         工具列表：{tool_names}
 
         输出格式必须包含：
@@ -148,7 +153,7 @@ class AgentToolKit:
         self.llm = llm
         self.tools = []
 
-    def _create_retrieval_tool(self, persist_directory: str, collection_name: str) -> Tool:
+    def _create_retrieval_tool(self, persist_directory: str, collection_name: str, collection: List[str]=[]) -> Tool:
         """
         创建基于 Chroma 数据库的检索工具。
         """
@@ -158,7 +163,8 @@ class AgentToolKit:
         )
         retriever = NewRetriever(
             store=chroma_store,
-            search_kwargs={"n_results": 8}
+            search_kwargs={"n_results": 8},
+            collection=collection
         )
 
         def retrieve_documents(query: str) -> str:
@@ -177,14 +183,13 @@ class AgentToolKit:
             description=f"从{collection_name}知识库中检索相关信息，返回格式化后的文档内容和元数据。",
         )
 
-    def init_rag_agent(self, persist_directory: str = './rag', collection_names: List[str] = ['rag2']) -> AgentExecutor:
+    def init_rag_agent(self, persist_directory: str = './rag', collection_name: str = 'rag2', collection: List[str]=[]) -> AgentExecutor:
         """
         初始化 RAG 智能体。
         """
-        qa_tools = []
-        for collection_name in collection_names:
-            retrieval_tool = self._create_retrieval_tool(persist_directory, collection_name)
-            qa_tools.append(retrieval_tool)
+        
+        retrieval_tool = self._create_retrieval_tool(persist_directory, collection_name, collection=collection)
+        qa_tools = [retrieval_tool]
 
         prompt = ChatPromptTemplate.from_template(
             """
