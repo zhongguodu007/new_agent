@@ -140,8 +140,8 @@ class App:
     def run(self, host: str = "127.0.0.1", port: int = 8080):
         """运行FastAPI应用"""
         #self.db.clear()
-        print(self.db.doc_dict)
-        self.input_file()
+        # print(self.db.doc_dict)
+        # self.input_file()
         uvicorn.run(self.app, host=host, port=port)
 
 if __name__ == "__main__":

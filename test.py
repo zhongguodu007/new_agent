@@ -63,7 +63,7 @@ async def main3():
         openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
         temperature=1 
     )
-    agent = init_rag_agent(callback_manager=callback_manager,llm=llm)
+    agent = init_search_agent(callback_manager=callback_manager,llm=llm)
     
     memory = MemoryChain(
         memory_key="chat_history",

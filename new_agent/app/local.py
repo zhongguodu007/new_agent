@@ -19,6 +19,8 @@ class Agent_DB:
         if(os.path.exists("database/collection.json")):
             with open("database/collection.json","r") as f:
                 self.collection_name = json.load(f)
+                if isinstance(self.collection_name, List[Dict[str, str]]):
+                    print("集合名称列表:", self.collection_name)
         else:
             self.collection_name = []
         if(os.path.exists("database/document.json")):
@@ -29,9 +31,9 @@ class Agent_DB:
     
     def dump(self):
         with open("database/collection","w") as f:
-            f.write(json.dump(self.collection_name))
+            json.dump(self.collection_name, f)
         with open("database/doc_id.json","w") as f:
-            f.write(json.dump(self.collection_dict))
+            json.dump(self.collection_dict, f)
 
     def create_collection(self,collection_name:str,description:str = "null"):
         if(collection_name in self.collection_name):
@@ -74,11 +76,11 @@ class Agent_DB:
             return True
         return False
 
-    def add_document(self,collection_name,file_path,description):
+    def add_document(self,collection_name, file_path, description):
         if not (collection_name in self.collection_name):
             return {"status":"集合不存在"}
         if self.check_document_repeat(collection_name,file_path):
-            return {"status":"不能添加同名文章"};
+            return {"status":"不能添加同名文章"}
         
         self.collection_dict[collection_name]["document"].append(file_path)
         doc_id = self.collection_dict[collection_name]["document_cnt"]

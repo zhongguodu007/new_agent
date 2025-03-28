@@ -11,8 +11,35 @@ from langchain_core.outputs import LLMResult
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from new_agent.tools.tool import BaseToolOutput
 from new_agent.utils.history import History
+
+# 工具输出类
+class BaseToolOutput:
+    """
+    LLM 要求 Tool 的输出为 str，但 Tool 用在别处时希望它正常返回结构化数据。
+    只需要将 Tool 返回值用该类封装，能同时满足两者的需要。
+    基类简单的将返回值字符串化，或指定 format="json" 将其转为 json。
+    用户也可以继承该类定义自己的转换方法。
+    """
+
+    def __init__(
+        self,
+        data: Any,
+        format: str = "",
+        data_alias: str = "",
+        **extras: Any,
+    ) -> None:
+        self.data = data
+        self.format = format
+        self.extras = extras
+        if data_alias:
+            setattr(self, data_alias, property(lambda obj: obj.data))
+
+    def __str__(self) -> str:
+        if self.format == "json":
+            return json.dumps(self.data, ensure_ascii=False, indent=2)
+        else:
+            return str(self.data)
 
 def dumps(obj: Dict) -> str:
     return json.dumps(obj, ensure_ascii=False)
