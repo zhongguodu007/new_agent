@@ -1,0 +1,1 @@
+[{"human_prefix": "Human", "ai_prefix": "AI", "memory_key": "History", "k": 5, "max_token_limit": 1500, "single_limit": 1000}, {"History": "昨天是2025年4月17日"}, {"AI": "你好"}, {"Human": "你好"}, {"Human": "101"}, {"AI": "102"}, {"date": "今天是2025年4月18日"}]
