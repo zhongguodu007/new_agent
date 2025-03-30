@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import ChatMessage from '@/components/ChatMessage.vue'
-import ChatInput from '@/components/ChatInput.vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
+import ChatMessage from '../components/ChatMessage.vue'
+import ChatInput from '../components/ChatInput.vue'
 import { ElMessage } from 'element-plus'
 
 interface Message {
@@ -22,6 +22,18 @@ interface Conversation {
 const conversations = ref<Conversation[]>([])
 const activeConversationId = ref('')
 const messages = ref<Message[]>([])
+const messagesContainer = ref<HTMLElement | null>(null)
+
+// 滚动到底部
+const scrollToBottom = async () => {
+    await nextTick()
+    if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+}
+
+// 监听消息变化，自动滚动到底部
+watch(() => messages.value.length, scrollToBottom)
 
 // 创建新的对话
 const createNewConversation = () => {
@@ -33,7 +45,7 @@ const createNewConversation = () => {
             {
                 id: 1,
                 content: '你好！有什么可以帮你的吗？',
-                role: 'ai',
+                role: 'ai' as const,
                 timestamp: new Date().toLocaleString()
             }
         ],
@@ -50,6 +62,7 @@ const setActiveConversation = (id: string) => {
     const conversation = conversations.value.find(c => c.id === id)
     if (conversation) {
         messages.value = conversation.messages
+        scrollToBottom()
     }
 }
 
@@ -113,6 +126,7 @@ const handleSendMessage = (message: string) => {
     }
 
     messages.value.push(userMessage)
+    scrollToBottom()
     
     // 更新对话中的消息
     const conversationIndex = conversations.value.findIndex(c => c.id === activeConversationId.value)
@@ -140,6 +154,7 @@ const handleSendMessage = (message: string) => {
             source: functionType
         }
         messages.value.push(aiResponse)
+        scrollToBottom()
         
         // 同步更新对话中的消息
         if (conversationIndex !== -1) {
@@ -154,6 +169,7 @@ const handleSendMessage = (message: string) => {
 // 初始创建一个对话
 onMounted(() => {
     createNewConversation()
+    scrollToBottom()
 })
 </script>
 
@@ -162,7 +178,7 @@ onMounted(() => {
         <aside class="chat-sidebar">
             <div class="sidebar-header">
                 <h3>对话列表</h3>
-                <el-button type="primary" @click="createNewConversation" size="small" icon="el-icon-plus">
+                <el-button type="primary" @click="createNewConversation" size="small">
                     新建对话
                 </el-button>
             </div>
@@ -178,10 +194,11 @@ onMounted(() => {
                     <div class="conversation-time">{{ new Date(conv.createdAt).toLocaleDateString() }}</div>
                     <el-button 
                         class="delete-btn" 
-                        type="text" 
-                        icon="el-icon-delete"
+                        type="text"
                         @click.stop="deleteConversation(conv.id)"
-                    />
+                    >
+                        删除
+                    </el-button>
                 </div>
             </div>
         </aside>
@@ -243,6 +260,7 @@ onMounted(() => {
     border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
     position: relative;
+    transition: all 0.3s;
 }
 
 .conversation-item:hover {
@@ -272,6 +290,8 @@ onMounted(() => {
     top: 50%;
     transform: translateY(-50%);
     opacity: 0;
+    transition: opacity 0.3s;
+    color: #f56c6c;
 }
 
 .conversation-item:hover .delete-btn {
@@ -281,11 +301,14 @@ onMounted(() => {
 .chat-main {
     flex: 1;
     background-color: #f5f7fa;
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-container {
     max-width: 800px;
     margin: 0 auto;
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -295,6 +318,7 @@ onMounted(() => {
     flex-grow: 1;
     overflow-y: auto;
     padding: 20px;
+    scroll-behavior: smooth;
 }
 
 .chat-function-selector {

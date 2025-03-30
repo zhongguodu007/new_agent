@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { Document, ChatDotRound, Connection } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -22,19 +23,19 @@ const navigateTo = (path) => {
     
     <section class="features">
       <div class="feature-card">
-        <el-icon class="feature-icon"><el-icon-document /></el-icon>
+        <el-icon class="feature-icon"><Document /></el-icon>
         <h3>自定义知识库</h3>
         <p>创建和管理专业领域的知识集合，添加和删除文本资源</p>
       </div>
       
       <div class="feature-card">
-        <el-icon class="feature-icon"><el-icon-chat-dot-round /></el-icon>
+        <el-icon class="feature-icon"><ChatDotRound /></el-icon>
         <h3>智能对话</h3>
         <p>支持全网搜索、本地知识库搜索和计算机专业知识检索</p>
       </div>
       
       <div class="feature-card">
-        <el-icon class="feature-icon"><el-icon-connection /></el-icon>
+        <el-icon class="feature-icon"><Connection /></el-icon>
         <h3>Agent工具调用</h3>
         <p>通过智能代理调用多种工具，实现更精准的专业领域回答</p>
       </div>
